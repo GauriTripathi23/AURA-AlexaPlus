@@ -1,4 +1,5 @@
 from backend.graph.workflow import workflow
+from backend.mcp.tool_functions import get_preparation_status
 
 
 def create_action_plan(goal: str) -> dict:
@@ -10,11 +11,17 @@ def create_action_plan(goal: str) -> dict:
     result = workflow.invoke(
         {
             "goal": goal,
+            "understanding": "",
             "plan": [],
+            "preparation_status": {},
+            "verification": "",
         }
     )
 
     return {
         "goal": goal,
+        "understanding": result["understanding"],
         "plan": result["plan"],
+        "preparation_status": result["preparation_status"],
+        "verification": result["verification"],
     }

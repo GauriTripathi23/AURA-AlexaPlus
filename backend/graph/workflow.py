@@ -2,6 +2,7 @@ from typing import TypedDict
 
 from langgraph.graph import StateGraph, START, END
 
+from backend.mcp.tool_functions import get_preparation_status
 
 # ---------------------------------
 # AURA Agent State
@@ -11,6 +12,7 @@ class AgentState(TypedDict):
     goal: str
     understanding: str
     plan: list[str]
+    preparation_status: dict
     verification: str
 
 
@@ -19,6 +21,7 @@ class AgentState(TypedDict):
 # ---------------------------------
 
 def understand_goal(state: AgentState):
+
     goal = state["goal"]
 
     return {
@@ -48,15 +51,31 @@ def create_plan(state: AgentState):
 
 
 # ---------------------------------
-# 3. Verify the Result
+# 3. Check Preparation Status
+# ---------------------------------
+
+def check_preparation(state: AgentState):
+
+    result = get_preparation_status(state["goal"])
+
+    return {
+        "preparation_status": result
+    }
+
+
+# ---------------------------------
+# 4. Verify the Result
 # ---------------------------------
 
 def verify_result(state: AgentState):
 
+    status = state["preparation_status"]
+
     return {
         "verification": (
-            "AURA reviewed the generated plan and confirmed "
-            "that the goal has actionable next steps."
+            f"AURA checked the preparation status. "
+            f"Current status: {status['status']}. "
+            f"Remaining tasks: {status['remaining_tasks']}."
         )
     }
 
@@ -69,11 +88,13 @@ builder = StateGraph(AgentState)
 
 builder.add_node("understand_goal", understand_goal)
 builder.add_node("create_plan", create_plan)
+builder.add_node("check_preparation", check_preparation)
 builder.add_node("verify_result", verify_result)
 
 builder.add_edge(START, "understand_goal")
 builder.add_edge("understand_goal", "create_plan")
-builder.add_edge("create_plan", "verify_result")
+builder.add_edge("create_plan", "check_preparation")
+builder.add_edge("check_preparation", "verify_result")
 builder.add_edge("verify_result", END)
 
 workflow = builder.compile()
@@ -90,6 +111,7 @@ if __name__ == "__main__":
             "goal": "Prepare for my hackathon presentation tomorrow",
             "understanding": "",
             "plan": [],
+            "preparation_status": {},
             "verification": "",
         }
     )
@@ -103,6 +125,9 @@ if __name__ == "__main__":
 
     for index, step in enumerate(result["plan"], start=1):
         print(f"{index}. {step}")
+
+    print("\nPREPARATION STATUS:")
+    print(result["preparation_status"])
 
     print("\nVERIFICATION:")
     print(result["verification"])
