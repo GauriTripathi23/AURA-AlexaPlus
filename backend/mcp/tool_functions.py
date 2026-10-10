@@ -10,10 +10,21 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 STATE_FILE = PROJECT_ROOT / "data" / "preparation_state.json"
 
 
+
 def get_goal_key(goal: str) -> str:
-    """Normalize different requests referring to the same goal."""
+    """Normalize requests so the same goal shares one progress counter."""
     text = re.sub(r"[^a-z0-9\s]", " ", (goal or "").lower())
     text = re.sub(r"\s+", " ", text).strip()
+
+    # Remove a trailing status request from a compound command.
+    text = re.sub(
+        r"\s+(?:and|then)\s+(?:please\s+)?(?:also\s+)?"
+        r"(?:check|show|get|view|tell me|give me|display)\s+"
+        r"(?:my\s+)?(?:preparation\s+)?"
+        r"(?:progress|status|readiness)\b.*$",
+        "",
+        text,
+    ).strip()
 
     prefixes = (
         "i finished a preparation task for ",
@@ -40,14 +51,16 @@ def get_goal_key(goal: str) -> str:
         if text.endswith(suffix):
             text = text[:-len(suffix)].strip()
 
-    if (
-        not text
-        or text in {"task", "preparation task", "a preparation task"}
-        or text == "i finished a preparation task"
-    ):
+    if not text or text in {
+        "task",
+        "preparation task",
+        "a preparation task",
+        "i finished a preparation task",
+    }:
         return "general preparation"
 
     return text
+
 
 
 def load_preparation_state() -> dict:
