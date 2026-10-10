@@ -111,25 +111,85 @@ def create_plan(state: AgentState):
 # 4. Verify the Result
 # ---------------------------------
 
+
 def verify_result(state: AgentState):
+    """Validate the result returned by the selected tool."""
 
+    selected_tool = state["selected_tool"]
     status = state["preparation_status"]
+    plan = state["plan"]
 
-    if status:
-        message = (
-        f"AURA updated the preparation status. "
-        f"Completed tasks: {status['completed_tasks']}. "
-        f"Remaining tasks: {status['remaining_tasks']}."
-    )
-    else:
-        message = (
-            f"AURA executed the selected tool: "
-            f"{state['selected_tool']}."
+    if selected_tool == "create_action_plan":
+        if (
+            isinstance(plan, list)
+            and len(plan) > 0
+            and all(
+                isinstance(step, str) and step.strip()
+                for step in plan
+            )
+        ):
+            message = (
+                f"Verification passed: action plan contains "
+                f"{len(plan)} valid steps."
+            )
+        else:
+            message = (
+                "Verification failed: the action plan is "
+                "empty or invalid."
+            )
+
+    elif selected_tool == "get_preparation_status":
+        valid = (
+            isinstance(status, dict)
+            and isinstance(status.get("completed_tasks"), int)
+            and isinstance(status.get("remaining_tasks"), int)
+            and isinstance(status.get("status"), str)
+            and status["completed_tasks"] >= 0
+            and status["remaining_tasks"] >= 0
         )
 
-    return {
-        "verification": message
-    }
+        if valid:
+            message = (
+                "Verification passed: preparation status is valid. "
+                f"Completed: {status['completed_tasks']}; "
+                f"remaining: {status['remaining_tasks']}."
+            )
+        else:
+            message = (
+                "Verification failed: preparation status "
+                "is missing or invalid."
+            )
+
+    elif selected_tool == "complete_preparation_task":
+        valid = (
+            isinstance(status, dict)
+            and isinstance(status.get("completed_tasks"), int)
+            and isinstance(status.get("remaining_tasks"), int)
+            and isinstance(status.get("message"), str)
+            and status["completed_tasks"] >= 0
+            and status["remaining_tasks"] >= 0
+        )
+
+        if valid:
+            message = (
+                "Verification passed: the completion tool "
+                "returned valid task counts. "
+                f"Completed: {status['completed_tasks']}; "
+                f"remaining: {status['remaining_tasks']}."
+            )
+        else:
+            message = (
+                "Verification failed: the completion result "
+                "is missing or invalid."
+            )
+
+    else:
+        message = (
+            f"Verification failed: unsupported tool "
+            f"'{selected_tool}'."
+        )
+
+    return {"verification": message}
 
 
 # ---------------------------------
