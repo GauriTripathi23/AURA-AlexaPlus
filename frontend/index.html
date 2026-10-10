@@ -473,59 +473,143 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    function renderResult(data) {
-      const bubble = document.createElement("div");
-      bubble.className = "message agent";
-      addText(bubble, "div", "AURA RESPONSE", "agent-label");
+    
+function renderResult(data) {
+  const bubble = document.createElement("div");
+  bubble.className = "message agent";
 
-      if (data.understanding) {
-        addText(bubble, "p", data.understanding);
-      }
+  addText(bubble, "div", "AURA RESPONSE", "agent-label");
 
-      if (data.selected_tool) {
-        addText(bubble, "span", "Tool: " + data.selected_tool, "tool-chip");
-      }
+  if (data.understanding) {
+    addText(bubble, "p", data.understanding);
+  }
 
-      if (Array.isArray(data.plan) && data.plan.length > 0) {
-        addText(bubble, "strong", "Your action plan");
-        const list = document.createElement("ol");
-        list.className = "plan";
+  // Show the actual tool execution sequence.
+  const selectedTools = Array.isArray(data.selected_tools)
+    ? data.selected_tools
+    : (data.selected_tool ? [data.selected_tool] : []);
 
-        data.plan.forEach(step => addText(list, "li", step));
-        bubble.appendChild(list);
-      }
+  if (selectedTools.length > 0) {
+    addText(bubble, "strong", "Execution sequence");
 
-      const status = data.preparation_status;
+    const sequence = document.createElement("ol");
+    sequence.className = "plan";
 
-      if (status && typeof status === "object" && Object.keys(status).length > 0) {
-        if (status.status) addText(bubble, "strong", status.status);
-        if (status.message) addText(bubble, "p", status.message);
+    selectedTools.forEach(toolName => {
+      addText(sequence, "li", toolName);
+    });
 
-        const completed = status.completed_tasks;
-        const remaining = status.remaining_tasks;
+    bubble.appendChild(sequence);
+  }
 
-        if (Number.isInteger(completed) && Number.isInteger(remaining)) {
+  // Show each tool's returned result.
+  const toolResults = data.tool_results;
+
+  if (toolResults && typeof toolResults === "object") {
+    addText(bubble, "strong", "Tool results");
+
+    Object.entries(toolResults).forEach(([toolName, result]) => {
+      const card = document.createElement("div");
+      card.style.cssText =
+        "margin-top:10px;padding:12px;border:1px solid " +
+        "var(--border);border-radius:10px;";
+
+      addText(card, "div", toolName, "tool-chip");
+
+      if (!result || typeof result !== "object") {
+        addText(card, "p", "No structured result returned.");
+      } else if (result.error) {
+        addText(card, "p", result.error, "error");
+      } else {
+        if (result.message) {
+          addText(card, "p", result.message);
+        }
+
+        if (Array.isArray(result.plan)) {
           addText(
-            bubble,
+            card,
             "p",
-            `Tasks completed: ${completed} · Remaining: ${remaining}`
+            `Generated ${result.plan.length} plan steps.`
           );
+        }
+
+        if (
+          Number.isInteger(result.completed_tasks) &&
+          Number.isInteger(result.remaining_tasks)
+        ) {
+          addText(
+            card,
+            "p",
+            `Completed: ${result.completed_tasks} · ` +
+            `Remaining: ${result.remaining_tasks}`
+          );
+        }
+
+        if (result.status) {
+          addText(card, "p", `Status: ${result.status}`);
         }
       }
 
-      if (data.verification) {
-        const passed = data.verification.startsWith("Verification passed");
-        addText(
-          bubble,
-          "div",
-          data.verification,
-          passed ? "verification" : "verification error"
-        );
-      }
+      bubble.appendChild(card);
+    });
+  }
 
-      messages.appendChild(bubble);
-      messages.scrollTop = messages.scrollHeight;
+  // Display the action plan.
+  if (Array.isArray(data.plan) && data.plan.length > 0) {
+    addText(bubble, "strong", "Your action plan");
+
+    const list = document.createElement("ol");
+    list.className = "plan";
+
+    data.plan.forEach(step => addText(list, "li", step));
+    bubble.appendChild(list);
+  }
+
+  // Display preparation progress.
+  const status = data.preparation_status;
+
+  if (
+    status &&
+    typeof status === "object" &&
+    Object.keys(status).length > 0
+  ) {
+    if (status.status) {
+      addText(bubble, "strong", status.status);
     }
+
+    if (status.message) {
+      addText(bubble, "p", status.message);
+    }
+
+    if (
+      Number.isInteger(status.completed_tasks) &&
+      Number.isInteger(status.remaining_tasks)
+    ) {
+      addText(
+        bubble,
+        "p",
+        `Tasks completed: ${status.completed_tasks} · ` +
+        `Remaining: ${status.remaining_tasks}`
+      );
+    }
+  }
+
+  // Show verification result.
+  if (data.verification) {
+    const passed = data.verification.startsWith("Verification passed");
+
+    addText(
+      bubble,
+      "div",
+      data.verification,
+      passed ? "verification" : "verification error"
+    );
+  }
+
+  messages.appendChild(bubble);
+  messages.scrollTop = messages.scrollHeight;
+}
+
 
     function showError(message) {
       const bubble = document.createElement("div");

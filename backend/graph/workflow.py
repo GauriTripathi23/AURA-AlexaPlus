@@ -1,3 +1,4 @@
+
 from typing import TypedDict
 
 from langgraph.graph import StateGraph, START, END
@@ -7,26 +8,22 @@ from backend.mcp.tool_functions import (
     create_action_plan,
     complete_preparation_task,
 )
-from backend.agents.tool_router import select_tool
-# ---------------------------------
-# AURA Agent State
-# ---------------------------------
+from backend.agents.tool_router import select_tools
+
 
 class AgentState(TypedDict):
     goal: str
     understanding: str
     plan: list[str]
     selected_tool: str
+    selected_tools: list[str]
     preparation_status: dict
+    tool_results: dict
     verification: str
 
 
-# ---------------------------------
-# 1. Understand the Goal
-# ---------------------------------
-
-def understand_goal(state: AgentState):
-
+# 1. Understand the user's goal
+def understand_goal(state: AgentState) -> dict:
     goal = state["goal"]
 
     return {
@@ -35,220 +32,159 @@ def understand_goal(state: AgentState):
         )
     }
 
-# ---------------------------------
-# 2. Select the Best Tool
-# ---------------------------------
 
-def select_agent_tool(state: AgentState):
+# 2. Select one or more tools
+def select_agent_tool(state: AgentState) -> dict:
+    tools = select_tools(state["goal"])
 
-    selected_tool = select_tool(state["goal"])
-
-    return {
-        "selected_tool": selected_tool
-    }
-# ---------------------------------
-# 3. Execute Selected Tool
-# ---------------------------------
-
-def execute_selected_tool(state: AgentState):
-
-    selected_tool = state["selected_tool"]
-
-    if selected_tool == "get_preparation_status":
-
-        result = get_preparation_status(state["goal"])
-
-        return {
-            "preparation_status": result
-        }
-
-    if selected_tool == "create_action_plan":
-
-        result = create_action_plan(state["goal"])
-
-        return {
-            "plan": result["plan"],
-            "preparation_status": {}
-        }
-    if selected_tool == "complete_preparation_task":
-
-        result = complete_preparation_task(state["goal"])
-
-        return {
-        "preparation_status": result
-    }
+    if not tools:
+        tools = ["create_action_plan"]
 
     return {
-        "preparation_status": {}
+        "selected_tools": tools,
+        "selected_tool": tools[0],
     }
-# ---------------------------------
-# 4. Create an Action Plan
-# ---------------------------------
 
-def create_plan(state: AgentState):
 
-    plan = [
-        "Understand the user's objective and expected outcome",
-        "Break the objective into practical actionable tasks",
-        "Identify the tools and resources required",
-        "Execute the required actions",
-        "Review the result for missing or incomplete steps",
+# 3. Execute all selected tools in order
+def execute_selected_tools(state: AgentState) -> dict:
+    goal = state["goal"]
+    selected_tools = state.get("selected_tools") or [
+        state.get("selected_tool", "create_action_plan")
     ]
 
+    plan = list(state.get("plan", []))
+    preparation_status = dict(state.get("preparation_status", {}))
+    tool_results = {}
+
+    for tool_name in selected_tools:
+        if tool_name == "create_action_plan":
+            result = create_action_plan(goal)
+            tool_results[tool_name] = result
+
+            if isinstance(result.get("plan"), list):
+                plan = result["plan"]
+
+        elif tool_name == "get_preparation_status":
+            result = get_preparation_status(goal)
+            tool_results[tool_name] = result
+            preparation_status = result
+
+        elif tool_name == "complete_preparation_task":
+            result = complete_preparation_task(goal)
+            tool_results[tool_name] = result
+            preparation_status = result
+
+        else:
+            tool_results[tool_name] = {
+                "error": f"Unsupported tool: {tool_name}"
+            }
+
     return {
-        "plan": plan
+        "plan": plan,
+        "preparation_status": preparation_status,
+        "tool_results": tool_results,
     }
 
 
-# ---------------------------------
-# 3. Check Preparation Status
-# ---------------------------------
+# 4. Verify each tool's returned result
+def verify_result(state: AgentState) -> dict:
+    selected_tools = state.get("selected_tools") or [
+        state.get("selected_tool", "")
+    ]
+    results = state.get("tool_results", {})
+    errors = []
 
+    for tool_name in selected_tools:
+        result = results.get(tool_name, {})
 
+        if not isinstance(result, dict) or result.get("error"):
+            errors.append(f"{tool_name}: missing or invalid result")
+            continue
 
+        if tool_name == "create_action_plan":
+            steps = result.get("plan")
 
-# ---------------------------------
-# 4. Verify the Result
-# ---------------------------------
-
-
-def verify_result(state: AgentState):
-    """Validate the result returned by the selected tool."""
-
-    selected_tool = state["selected_tool"]
-    status = state["preparation_status"]
-    plan = state["plan"]
-
-    if selected_tool == "create_action_plan":
-        if (
-            isinstance(plan, list)
-            and len(plan) > 0
-            and all(
-                isinstance(step, str) and step.strip()
-                for step in plan
-            )
-        ):
-            message = (
-                f"Verification passed: action plan contains "
-                f"{len(plan)} valid steps."
-            )
-        else:
-            message = (
-                "Verification failed: the action plan is "
-                "empty or invalid."
+            valid = (
+                isinstance(steps, list)
+                and len(steps) > 0
+                and all(
+                    isinstance(step, str) and step.strip()
+                    for step in steps
+                )
             )
 
-    elif selected_tool == "get_preparation_status":
-        valid = (
-            isinstance(status, dict)
-            and isinstance(status.get("completed_tasks"), int)
-            and isinstance(status.get("remaining_tasks"), int)
-            and isinstance(status.get("status"), str)
-            and status["completed_tasks"] >= 0
-            and status["remaining_tasks"] >= 0
-        )
+            if not valid:
+                errors.append(f"{tool_name}: invalid action plan")
 
-        if valid:
-            message = (
-                "Verification passed: preparation status is valid. "
-                f"Completed: {status['completed_tasks']}; "
-                f"remaining: {status['remaining_tasks']}."
-            )
-        else:
-            message = (
-                "Verification failed: preparation status "
-                "is missing or invalid."
+        elif tool_name in {
+            "get_preparation_status",
+            "complete_preparation_task",
+        }:
+            completed = result.get("completed_tasks")
+            remaining = result.get("remaining_tasks")
+
+            valid = (
+                isinstance(completed, int)
+                and not isinstance(completed, bool)
+                and isinstance(remaining, int)
+                and not isinstance(remaining, bool)
+                and completed >= 0
+                and remaining >= 0
             )
 
-    elif selected_tool == "complete_preparation_task":
-        valid = (
-            isinstance(status, dict)
-            and isinstance(status.get("completed_tasks"), int)
-            and isinstance(status.get("remaining_tasks"), int)
-            and isinstance(status.get("message"), str)
-            and status["completed_tasks"] >= 0
-            and status["remaining_tasks"] >= 0
-        )
+            if not valid:
+                errors.append(f"{tool_name}: invalid task counts")
 
-        if valid:
-            message = (
-                "Verification passed: the completion tool "
-                "returned valid task counts. "
-                f"Completed: {status['completed_tasks']}; "
-                f"remaining: {status['remaining_tasks']}."
-            )
-        else:
-            message = (
-                "Verification failed: the completion result "
-                "is missing or invalid."
-            )
+    if errors:
+        message = "Verification failed: " + "; ".join(errors) + "."
 
     else:
+        names = " -> ".join(selected_tools)
         message = (
-            f"Verification failed: unsupported tool "
-            f"'{selected_tool}'."
+            f"Verification passed: {len(selected_tools)} tool "
+            f"result(s) validated. Execution order: {names}."
         )
 
     return {"verification": message}
 
 
-# ---------------------------------
-# Build AURA LangGraph
-# ---------------------------------
-
-builder = StateGraph(AgentState)
-
+# 5. Build the graph
 builder = StateGraph(AgentState)
 
 builder.add_node("understand_goal", understand_goal)
 builder.add_node("select_agent_tool", select_agent_tool)
-builder.add_node("execute_selected_tool", execute_selected_tool)
-builder.add_node("create_plan", create_plan)
+builder.add_node("execute_selected_tools", execute_selected_tools)
 builder.add_node("verify_result", verify_result)
 
 builder.add_edge(START, "understand_goal")
 builder.add_edge("understand_goal", "select_agent_tool")
-builder.add_edge("select_agent_tool", "execute_selected_tool")
-builder.add_edge("execute_selected_tool", "verify_result")
+builder.add_edge("select_agent_tool", "execute_selected_tools")
+builder.add_edge("execute_selected_tools", "verify_result")
 builder.add_edge("verify_result", END)
 
 workflow = builder.compile()
 
-workflow = builder.compile()
 
-
-# ---------------------------------
-# Local Test
-# ---------------------------------
-
+# Local test
 if __name__ == "__main__":
-
     result = workflow.invoke(
         {
-            "goal": "I finished a preparation task",
+            "goal": "Create a plan and check progress",
             "understanding": "",
             "plan": [],
             "selected_tool": "",
+            "selected_tools": [],
             "preparation_status": {},
+            "tool_results": {},
             "verification": "",
         }
     )
 
     print("\n========== AURA AGENT ==========\n")
-
-    print("UNDERSTANDING:")
-    print(result["understanding"])
-    
-    print("\nSELECTED TOOL:")
-    print(result["selected_tool"])
-
-    print("\nACTION PLAN:")
-
-    for index, step in enumerate(result["plan"], start=1):
-        print(f"{index}. {step}")
-
-    print("\nPREPARATION STATUS:")
-    print(result["preparation_status"])
-
-    print("\nVERIFICATION:")
-    print(result["verification"])
+    print("UNDERSTANDING:", result["understanding"])
+    print("SELECTED TOOLS:", result["selected_tools"])
+    print("ACTION PLAN:", result["plan"])
+    print("PREPARATION STATUS:", result["preparation_status"])
+    print("TOOL RESULTS:", result["tool_results"])
+    print("VERIFICATION:", result["verification"])

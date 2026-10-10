@@ -18,18 +18,33 @@ def complete_preparation_task(goal: str) -> dict:
     return complete_preparation_task_fn(goal)
 
 
+
 def run_agent(goal: str) -> dict:
-    """Run the AURA LangGraph agent for a user's goal."""
+    """Run the AURA LangGraph agent and return its complete execution trace."""
     result = workflow.invoke(
         {
             "goal": goal,
             "understanding": "",
             "plan": [],
             "selected_tool": "",
+            "selected_tools": [],
             "preparation_status": {},
+            "tool_results": {},
             "verification": "",
         }
     )
+
+    return {
+        "goal": result["goal"],
+        "understanding": result["understanding"],
+        "selected_tool": result["selected_tool"],
+        "selected_tools": result.get("selected_tools", []),
+        "plan": result["plan"],
+        "preparation_status": result["preparation_status"],
+        "tool_results": result.get("tool_results", {}),
+        "verification": result["verification"],
+    }
+
 
     return {
         "goal": result["goal"],
