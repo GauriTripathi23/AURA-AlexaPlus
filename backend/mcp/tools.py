@@ -12,9 +12,10 @@ def create_action_plan(goal: str) -> dict:
     return create_action_plan_fn(goal)
 
 
-def complete_preparation_task() -> dict:
-    """Mark one preparation task as completed."""
-    return complete_preparation_task_fn()
+
+def complete_preparation_task(goal: str) -> dict:
+    """Complete one preparation task for a specific goal."""
+    return complete_preparation_task_fn(goal)
 
 
 def run_agent(goal: str) -> dict:

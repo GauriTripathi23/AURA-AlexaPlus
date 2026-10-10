@@ -72,7 +72,7 @@ def execute_selected_tool(state: AgentState):
         }
     if selected_tool == "complete_preparation_task":
 
-        result = complete_preparation_task()
+        result = complete_preparation_task(state["goal"])
 
         return {
         "preparation_status": result

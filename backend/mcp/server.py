@@ -16,10 +16,11 @@ def action_plan(goal: str) -> dict:
     return create_action_plan(goal)
 
 
+
 @mcp.tool()
-def mark_preparation_task_complete() -> dict:
-    """Mark one preparation task as completed."""
-    return complete_preparation_task()
+def mark_preparation_task_complete(goal: str) -> dict:
+    """Mark one preparation task as completed for a specific goal."""
+    return complete_preparation_task(goal)
 
 
 @mcp.tool()
