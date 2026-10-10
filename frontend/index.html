@@ -1,0 +1,616 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>AURA — Adaptive Unified Response Agent</title>
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #11182b;
+      --panel-light: #182139;
+      --border: #28334d;
+      --text: #edf2ff;
+      --muted: #97a5c1;
+      --accent: #a5b4fc;
+      --green: #86efac;
+      --red: #fca5a5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at top left, #222958, transparent 42%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    button {
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 12px 17px;
+      color: #0b1020;
+      background: var(--accent);
+      font-weight: 700;
+      transition: background .2s, border-color .2s;
+    }
+
+    button:hover { background: #c7d2fe; }
+    button:disabled { opacity: .55; cursor: wait; }
+
+    .app {
+      width: min(1120px, 100%);
+      margin: auto;
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      font-size: 21px;
+      font-weight: 800;
+      color: #0b1020;
+      background: linear-gradient(135deg, #c7d2fe, #818cf8);
+      box-shadow: 0 0 32px #818cf833;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 4px;
+      letter-spacing: 1.5px;
+    }
+
+    .subtitle { color: var(--muted); font-size: 12px; }
+
+    .connection {
+      border: 1px solid var(--border);
+      background: #11182be8;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 12px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 7px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .connection.online .dot { background: var(--green); }
+    .connection.busy .dot { background: #fbbf24; }
+
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(250px, .8fr);
+      gap: 20px;
+    }
+
+    .chat, .side-card {
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: #11182be8;
+      overflow: hidden;
+    }
+
+    .chat {
+      display: flex;
+      flex-direction: column;
+      min-height: 650px;
+    }
+
+    .chat-header {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chat-header h2 { margin: 0 0 6px; font-size: 16px; }
+    .chat-header p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    .messages {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .welcome {
+      margin: auto;
+      text-align: center;
+      max-width: 430px;
+      padding: 30px 8px;
+    }
+
+    .orb {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #e0e7ff, #818cf8 46%, #4338ca);
+      box-shadow: 0 0 50px #818cf844;
+    }
+
+    .welcome h2 { margin: 0 0 10px; font-size: 25px; }
+    .welcome p { line-height: 1.7; font-size: 14px; color: var(--muted); }
+
+    .message {
+      max-width: 96%;
+      border-radius: 17px;
+      padding: 14px 16px;
+      line-height: 1.6;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: #343b70;
+      border: 1px solid #555e9d;
+    }
+
+    .message.agent {
+      align-self: flex-start;
+      background: var(--panel-light);
+      border: 1px solid var(--border);
+      width: 100%;
+    }
+
+    .agent-label {
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 1.3px;
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .tool-chip {
+      display: inline-block;
+      padding: 4px 8px;
+      margin: 9px 0;
+      border: 1px solid #555e9d;
+      border-radius: 7px;
+      color: #c7d2fe;
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .plan { padding-left: 22px; margin: 12px 0; }
+    .plan li { margin: 7px 0; }
+
+    .verification {
+      border-top: 1px solid var(--border);
+      margin-top: 14px;
+      padding-top: 12px;
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    .verification.error, .error { color: var(--red); }
+
+    .composer {
+      padding: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    form { display: flex; gap: 10px; }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      background: #0b1020;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      padding: 14px;
+    }
+
+    input:focus { border-color: var(--accent); }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .quick-actions button {
+      padding: 8px 10px;
+      font-size: 11px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .quick-actions button:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .sidebar { display: flex; flex-direction: column; gap: 16px; }
+    .side-card { padding: 21px; }
+    .side-card h3 { margin: 0 0 13px; font-size: 14px; }
+    .side-card p { color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+    .architecture {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      margin-top: 18px;
+    }
+
+    .layer {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 12px;
+      background: #0b1020;
+    }
+
+    .layer:first-child { border-color: #555e9d; color: #c7d2fe; }
+    .arrow { color: #7785a6; font-size: 15px; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .stat {
+      padding: 13px;
+      border-radius: 12px;
+      background: #0b1020;
+      border: 1px solid var(--border);
+    }
+
+    .stat strong { display: block; font-size: 22px; margin-bottom: 5px; }
+    .stat span { font-size: 11px; color: var(--muted); }
+
+    footer {
+      font-size: 11px;
+      text-align: center;
+      color: #71809e;
+      padding: 5px 0;
+    }
+
+    @media (max-width: 800px) {
+      .app { padding: 14px; gap: 16px; }
+      .layout { grid-template-columns: 1fr; }
+      .chat { min-height: 570px; }
+      .connection { font-size: 10px; padding: 8px; }
+    }
+
+    @media (max-width: 460px) {
+      header { align-items: flex-start; }
+      h1 { font-size: 16px; }
+      .subtitle { max-width: 200px; line-height: 1.5; }
+      .logo { width: 40px; height: 40px; }
+      .messages { padding: 15px; }
+      .composer { padding: 12px; }
+      form { flex-direction: column; }
+      form button { width: 100%; }
+      .message { max-width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo">A</div>
+        <div>
+          <h1>AURA</h1>
+          <div class="subtitle">Adaptive Unified Response Agent</div>
+        </div>
+      </div>
+
+      <div id="connection" class="connection">
+        <span class="dot"></span>Local demo · Ready to connect
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="chat">
+        <div class="chat-header">
+          <h2>Your action workspace</h2>
+          <p>Describe your goal. AURA can plan, check preparation progress, and track completed tasks.</p>
+        </div>
+
+        <div id="messages" class="messages" aria-live="polite">
+          <div id="welcome" class="welcome">
+            <div class="orb"></div>
+            <h2>From “What should I do?”<br />to “Let's get it done.”</h2>
+            <p>
+              Tell AURA what you're working toward. The agent selects a tool
+              and returns its result with a verification check.
+            </p>
+          </div>
+        </div>
+
+        <div class="composer">
+          <form id="chat-form">
+            <input
+              id="goal-input"
+              type="text"
+              placeholder="e.g. Prepare for my hackathon presentation"
+              autocomplete="off"
+              required
+            />
+            <button id="send-button" type="submit">Send ↗</button>
+          </form>
+
+          <div class="quick-actions">
+            <button
+              type="button"
+              data-prompt="Prepare for my hackathon presentation"
+            >Create a plan</button>
+
+            <button
+              type="button"
+              data-prompt="Am I prepared for my hackathon presentation?"
+            >Check progress</button>
+
+            <button
+              type="button"
+              data-prompt="I finished a preparation task for my hackathon presentation"
+            >Complete a task</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="side-card">
+          <h3>How AURA works</h3>
+          <p>A goal enters the agent, the workflow selects a tool, and the returned result is checked before it is shown.</p>
+
+          <div class="architecture">
+            <div class="layer">AURA web interface</div>
+            <div class="arrow">↓</div>
+            <div class="layer">MCP · Streamable HTTP</div>
+            <div class="arrow">↓</div>
+            <div class="layer">LangGraph agent</div>
+            <div class="arrow">↓</div>
+            <div class="layer">Tools · Saved goal progress</div>
+          </div>
+        </div>
+
+        <div class="side-card">
+          <h3>Backend capabilities</h3>
+          <div class="stats">
+            <div class="stat">
+              <strong>3</strong>
+              <span>MCP tools registered</span>
+            </div>
+            <div class="stat">
+              <strong>3</strong>
+              <span>Agent routes tested</span>
+            </div>
+            <div class="stat">
+              <strong>JSON</strong>
+              <span>Persistent local state</span>
+            </div>
+            <div class="stat">
+              <strong>QA</strong>
+              <span>Result verification</span>
+            </div>
+          </div>
+          <p>Connected to your local AURA backend when both servers are running.</p>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      AURA · Local development demo · Task progress is stored on this machine
+    </footer>
+  </div>
+
+  <script>
+    "use strict";
+
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("goal-input");
+    const messages = document.getElementById("messages");
+    const sendButton = document.getElementById("send-button");
+    const connection = document.getElementById("connection");
+    const welcome = document.getElementById("welcome");
+
+    function addText(parent, tag, text, className) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      element.textContent = String(text);
+      parent.appendChild(element);
+      return element;
+    }
+
+    function addUserMessage(text) {
+      const bubble = document.createElement("div");
+      bubble.className = "message user";
+      bubble.textContent = text;
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function renderResult(data) {
+      const bubble = document.createElement("div");
+      bubble.className = "message agent";
+      addText(bubble, "div", "AURA RESPONSE", "agent-label");
+
+      if (data.understanding) {
+        addText(bubble, "p", data.understanding);
+      }
+
+      if (data.selected_tool) {
+        addText(bubble, "span", "Tool: " + data.selected_tool, "tool-chip");
+      }
+
+      if (Array.isArray(data.plan) && data.plan.length > 0) {
+        addText(bubble, "strong", "Your action plan");
+        const list = document.createElement("ol");
+        list.className = "plan";
+
+        data.plan.forEach(step => addText(list, "li", step));
+        bubble.appendChild(list);
+      }
+
+      const status = data.preparation_status;
+
+      if (status && typeof status === "object" && Object.keys(status).length > 0) {
+        if (status.status) addText(bubble, "strong", status.status);
+        if (status.message) addText(bubble, "p", status.message);
+
+        const completed = status.completed_tasks;
+        const remaining = status.remaining_tasks;
+
+        if (Number.isInteger(completed) && Number.isInteger(remaining)) {
+          addText(
+            bubble,
+            "p",
+            `Tasks completed: ${completed} · Remaining: ${remaining}`
+          );
+        }
+      }
+
+      if (data.verification) {
+        const passed = data.verification.startsWith("Verification passed");
+        addText(
+          bubble,
+          "div",
+          data.verification,
+          passed ? "verification" : "verification error"
+        );
+      }
+
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function showError(message) {
+      const bubble = document.createElement("div");
+      bubble.className = "message agent";
+      addText(bubble, "div", "CONNECTION ERROR", "agent-label");
+      addText(bubble, "p", message, "error");
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function sendGoal(goal) {
+      const text = String(goal || "").trim();
+      if (!text || sendButton.disabled) return;
+
+      if (welcome && welcome.isConnected) welcome.remove();
+
+      addUserMessage(text);
+      input.value = "";
+      sendButton.disabled = true;
+
+      // Prevent repeat clicks until the current request finishes.
+      document.querySelectorAll(".quick-actions button").forEach(button => {
+        button.disabled = true;
+      });
+
+      connection.className = "connection busy";
+      connection.replaceChildren();
+      addText(connection, "span", "", "dot");
+      connection.appendChild(document.createTextNode("Contacting AURA…"));
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text })
+        });
+
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("The server returned an invalid response.");
+        }
+
+        if (!response.ok) {
+          throw new Error(data.detail || "The request failed.");
+        }
+
+        renderResult(data);
+        connection.className = "connection online";
+        connection.replaceChildren();
+        addText(connection, "span", "", "dot");
+        connection.appendChild(document.createTextNode("Connected · MCP"));
+      } catch (error) {
+        showError(
+          error.message ||
+          "Could not connect to AURA. Check that both local servers are running."
+        );
+
+        connection.className = "connection";
+        connection.replaceChildren();
+        addText(connection, "span", "", "dot");
+        connection.appendChild(document.createTextNode("Connection failed"));
+      } finally {
+        sendButton.disabled = false;
+        document.querySelectorAll(".quick-actions button").forEach(button => {
+          button.disabled = false;
+        });
+        input.focus();
+      }
+    }
+
+    // Text input: send exactly what the user entered.
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      sendGoal(input.value);
+    });
+
+    // Quick actions: each button sends its explicit data-prompt.
+    // There is exactly one listener registration block in this file.
+    document.querySelectorAll(".quick-actions button[data-prompt]").forEach(button => {
+      button.addEventListener("click", () => {
+        sendGoal(button.dataset.prompt);
+      });
+    });
+  </script>
+</body>
+</html>
