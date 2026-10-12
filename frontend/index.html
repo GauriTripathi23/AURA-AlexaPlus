@@ -2,9 +2,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0b1020" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1020">
   <title>AURA — Adaptive Unified Response Agent</title>
 
   <style>
@@ -25,10 +25,10 @@
     body {
       margin: 0;
       min-height: 100vh;
+      color: var(--text);
       background:
         radial-gradient(ellipse at top left, #222958, transparent 42%),
         var(--bg);
-      color: var(--text);
       font-family: Inter, "Segoe UI", Arial, sans-serif;
     }
 
@@ -42,7 +42,7 @@
       color: #0b1020;
       background: var(--accent);
       font-weight: 700;
-      transition: background .2s, border-color .2s;
+      transition: background .2s;
     }
 
     button:hover { background: #c7d2fe; }
@@ -50,30 +50,26 @@
 
     .app {
       width: min(1120px, 100%);
-      margin: auto;
       min-height: 100vh;
+      margin: auto;
       padding: 24px;
       display: flex;
       flex-direction: column;
       gap: 24px;
     }
 
-    header {
+    header, .brand {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-    }
+    header { justify-content: space-between; }
 
     .logo {
       width: 46px;
       height: 46px;
+      flex-shrink: 0;
       border-radius: 15px;
       display: grid;
       place-items: center;
@@ -85,8 +81,8 @@
     }
 
     h1 {
-      font-size: 20px;
       margin: 0 0 4px;
+      font-size: 20px;
       letter-spacing: 1.5px;
     }
 
@@ -94,7 +90,7 @@
 
     .connection {
       border: 1px solid var(--border);
-      background: #11182be8;
+      background: var(--panel);
       color: var(--muted);
       border-radius: 999px;
       padding: 9px 13px;
@@ -128,9 +124,9 @@
     }
 
     .chat {
+      min-height: 650px;
       display: flex;
       flex-direction: column;
-      min-height: 650px;
     }
 
     .chat-header {
@@ -139,7 +135,13 @@
     }
 
     .chat-header h2 { margin: 0 0 6px; font-size: 16px; }
-    .chat-header p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    .chat-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
 
     .messages {
       padding: 24px;
@@ -152,9 +154,9 @@
 
     .welcome {
       margin: auto;
-      text-align: center;
       max-width: 430px;
       padding: 30px 8px;
+      text-align: center;
     }
 
     .orb {
@@ -167,10 +169,15 @@
     }
 
     .welcome h2 { margin: 0 0 10px; font-size: 25px; }
-    .welcome p { line-height: 1.7; font-size: 14px; color: var(--muted); }
+
+    .welcome p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
 
     .message {
-      max-width: 96%;
+      max-width: 100%;
       border-radius: 17px;
       padding: 14px 16px;
       line-height: 1.6;
@@ -186,24 +193,24 @@
 
     .message.agent {
       align-self: flex-start;
+      width: 100%;
       background: var(--panel-light);
       border: 1px solid var(--border);
-      width: 100%;
     }
 
     .agent-label {
-      text-transform: uppercase;
-      font-size: 10px;
-      letter-spacing: 1.3px;
-      color: var(--accent);
       margin-bottom: 8px;
+      color: var(--accent);
+      font-size: 10px;
       font-weight: 700;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
     }
 
     .tool-chip {
       display: inline-block;
-      padding: 4px 8px;
       margin: 9px 0;
+      padding: 4px 8px;
       border: 1px solid #555e9d;
       border-radius: 7px;
       color: #c7d2fe;
@@ -215,14 +222,14 @@
     .plan li { margin: 7px 0; }
 
     .verification {
-      border-top: 1px solid var(--border);
       margin-top: 14px;
       padding-top: 12px;
+      border-top: 1px solid var(--border);
       color: var(--green);
       font-size: 12px;
     }
 
-    .verification.error, .error { color: var(--red); }
+    .error, .verification.error { color: var(--red); }
 
     .composer {
       padding: 18px;
@@ -234,12 +241,12 @@
     input {
       flex: 1;
       min-width: 0;
-      background: #0b1020;
-      color: var(--text);
+      padding: 14px;
       border: 1px solid var(--border);
       border-radius: 12px;
       outline: none;
-      padding: 14px;
+      color: var(--text);
+      background: #0b1020;
     }
 
     input:focus { border-color: var(--accent); }
@@ -253,10 +260,10 @@
 
     .quick-actions button {
       padding: 8px 10px;
-      font-size: 11px;
-      background: transparent;
       border: 1px solid var(--border);
       color: var(--muted);
+      background: transparent;
+      font-size: 11px;
       font-weight: 500;
     }
 
@@ -268,7 +275,12 @@
     .sidebar { display: flex; flex-direction: column; gap: 16px; }
     .side-card { padding: 21px; }
     .side-card h3 { margin: 0 0 13px; font-size: 14px; }
-    .side-card p { color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+    .side-card p {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
 
     .architecture {
       display: flex;
@@ -300,19 +312,33 @@
 
     .stat {
       padding: 13px;
+      border: 1px solid var(--border);
       border-radius: 12px;
       background: #0b1020;
-      border: 1px solid var(--border);
     }
 
-    .stat strong { display: block; font-size: 22px; margin-bottom: 5px; }
-    .stat span { font-size: 11px; color: var(--muted); }
+    .stat strong { display: block; margin-bottom: 5px; font-size: 22px; }
+    .stat span { color: var(--muted); font-size: 11px; }
+
+    .task-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .task-marker { min-width: 20px; font-weight: 700; }
+    .task-done { color: var(--green); }
+    .task-pending { color: var(--muted); }
 
     footer {
+      padding: 5px 0;
+      color: #71809e;
       font-size: 11px;
       text-align: center;
-      color: #71809e;
-      padding: 5px 0;
     }
 
     @media (max-width: 800px) {
@@ -331,7 +357,6 @@
       .composer { padding: 12px; }
       form { flex-direction: column; }
       form button { width: 100%; }
-      .message { max-width: 100%; }
     }
   </style>
 </head>
@@ -362,7 +387,7 @@
         <div id="messages" class="messages" aria-live="polite">
           <div id="welcome" class="welcome">
             <div class="orb"></div>
-            <h2>From “What should I do?”<br />to “Let's get it done.”</h2>
+            <h2>From “What should I do?”<br>to “Let's get it done.”</h2>
             <p>
               Tell AURA what you're working toward. The agent selects a tool
               and returns its result with a verification check.
@@ -378,25 +403,14 @@
               placeholder="e.g. Prepare for my hackathon presentation"
               autocomplete="off"
               required
-            />
+            >
             <button id="send-button" type="submit">Send ↗</button>
           </form>
 
           <div class="quick-actions">
-            <button
-              type="button"
-              data-prompt="Prepare for my hackathon presentation"
-            >Create a plan</button>
-
-            <button
-              type="button"
-              data-prompt="Am I prepared for my hackathon presentation?"
-            >Check progress</button>
-
-            <button
-              type="button"
-              data-prompt="I finished a preparation task for my hackathon presentation"
-            >Complete a task</button>
+            <button type="button" data-prompt="Prepare for my hackathon presentation">Create a plan</button>
+            <button type="button" data-prompt="Am I prepared for my hackathon presentation?">Check progress</button>
+            <button type="button" data-prompt="I finished a preparation task for my hackathon presentation and check progress">Complete a task</button>
           </div>
         </div>
       </section>
@@ -404,7 +418,7 @@
       <aside class="sidebar">
         <div class="side-card">
           <h3>How AURA works</h3>
-          <p>A goal enters the agent, the workflow selects a tool, and the returned result is checked before it is shown.</p>
+          <p>A goal enters the agent, the workflow selects tools, and the returned results are checked before they are shown.</p>
 
           <div class="architecture">
             <div class="layer">AURA web interface</div>
@@ -420,31 +434,17 @@
         <div class="side-card">
           <h3>Backend capabilities</h3>
           <div class="stats">
-            <div class="stat">
-              <strong>3</strong>
-              <span>MCP tools registered</span>
-            </div>
-            <div class="stat">
-              <strong>3</strong>
-              <span>Agent routes tested</span>
-            </div>
-            <div class="stat">
-              <strong>JSON</strong>
-              <span>Persistent local state</span>
-            </div>
-            <div class="stat">
-              <strong>QA</strong>
-              <span>Result verification</span>
-            </div>
+            <div class="stat"><strong>3</strong><span>MCP tools registered</span></div>
+            <div class="stat"><strong>3</strong><span>Agent routes tested</span></div>
+            <div class="stat"><strong>JSON</strong><span>Persistent local state</span></div>
+            <div class="stat"><strong>QA</strong><span>Result verification</span></div>
           </div>
           <p>Connected to your local AURA backend when both servers are running.</p>
         </div>
       </aside>
     </main>
 
-    <footer>
-      AURA · Local development demo · Task progress is stored on this machine
-    </footer>
+    <footer>AURA · Local development demo · Task progress is stored on this machine</footer>
   </div>
 
   <script>
@@ -456,6 +456,7 @@
     const sendButton = document.getElementById("send-button");
     const connection = document.getElementById("connection");
     const welcome = document.getElementById("welcome");
+    const quickButtons = document.querySelectorAll(".quick-actions button");
 
     function addText(parent, tag, text, className) {
       const element = document.createElement(tag);
@@ -473,143 +474,183 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    
-function renderResult(data) {
-  const bubble = document.createElement("div");
-  bubble.className = "message agent";
+    function renderChecklist(parent, tasks) {
+      if (!Array.isArray(tasks) || tasks.length === 0) return false;
 
-  addText(bubble, "div", "AURA RESPONSE", "agent-label");
+      addText(parent, "strong", "Goal checklist");
 
-  if (data.understanding) {
-    addText(bubble, "p", data.understanding);
-  }
+      tasks.forEach(task => {
+        if (!task || typeof task.title !== "string") return;
 
-  // Show the actual tool execution sequence.
-  const selectedTools = Array.isArray(data.selected_tools)
-    ? data.selected_tools
-    : (data.selected_tool ? [data.selected_tool] : []);
+        const completed = task.completed === true;
+        const row = document.createElement("div");
+        row.className = "task-row";
 
-  if (selectedTools.length > 0) {
-    addText(bubble, "strong", "Execution sequence");
+        addText(
+          row,
+          "span",
+          completed ? "✓" : "○",
+          "task-marker " + (completed ? "task-done" : "task-pending")
+        );
 
-    const sequence = document.createElement("ol");
-    sequence.className = "plan";
+        const details = document.createElement("div");
+        details.style.flex = "1";
 
-    selectedTools.forEach(toolName => {
-      addText(sequence, "li", toolName);
-    });
+        const taskId = Number.isInteger(task.id) ? task.id : "";
+        addText(details, "div", `Task ${taskId}`);
+        addText(details, "div", task.title);
+        addText(
+          details,
+          "div",
+          completed ? "Completed" : "Pending",
+          completed ? "task-done" : "task-pending"
+        );
 
-    bubble.appendChild(sequence);
-  }
+        row.appendChild(details);
+        parent.appendChild(row);
+      });
 
-  // Show each tool's returned result.
-  const toolResults = data.tool_results;
+      return true;
+    }
 
-  if (toolResults && typeof toolResults === "object") {
-    addText(bubble, "strong", "Tool results");
+    function renderResult(data) {
+      const bubble = document.createElement("div");
+      bubble.className = "message agent";
 
-    Object.entries(toolResults).forEach(([toolName, result]) => {
-      const card = document.createElement("div");
-      card.style.cssText =
-        "margin-top:10px;padding:12px;border:1px solid " +
-        "var(--border);border-radius:10px;";
+      addText(bubble, "div", "AURA RESPONSE", "agent-label");
 
-      addText(card, "div", toolName, "tool-chip");
-
-      if (!result || typeof result !== "object") {
-        addText(card, "p", "No structured result returned.");
-      } else if (result.error) {
-        addText(card, "p", result.error, "error");
-      } else {
-        if (result.message) {
-          addText(card, "p", result.message);
-        }
-
-        if (Array.isArray(result.plan)) {
-          addText(
-            card,
-            "p",
-            `Generated ${result.plan.length} plan steps.`
-          );
-        }
-
-        if (
-          Number.isInteger(result.completed_tasks) &&
-          Number.isInteger(result.remaining_tasks)
-        ) {
-          addText(
-            card,
-            "p",
-            `Completed: ${result.completed_tasks} · ` +
-            `Remaining: ${result.remaining_tasks}`
-          );
-        }
-
-        if (result.status) {
-          addText(card, "p", `Status: ${result.status}`);
-        }
+      if (data.understanding) {
+        addText(bubble, "p", data.understanding);
       }
 
-      bubble.appendChild(card);
-    });
-  }
+      const results =
+        data.tool_results && typeof data.tool_results === "object"
+          ? data.tool_results
+          : {};
 
-  // Display the action plan.
-  if (Array.isArray(data.plan) && data.plan.length > 0) {
-    addText(bubble, "strong", "Your action plan");
+      const selectedTools = Array.isArray(data.selected_tools)
+        ? data.selected_tools
+        : data.selected_tool
+          ? [data.selected_tool]
+          : [];
 
-    const list = document.createElement("ol");
-    list.className = "plan";
+      if (selectedTools.length > 0) {
+        addText(bubble, "strong", "Execution sequence");
+        const sequence = document.createElement("ol");
+        sequence.className = "plan";
 
-    data.plan.forEach(step => addText(list, "li", step));
-    bubble.appendChild(list);
-  }
+        selectedTools.forEach(tool => addText(sequence, "li", tool));
+        bubble.appendChild(sequence);
+      }
 
-  // Display preparation progress.
-  const status = data.preparation_status;
+      if (Object.keys(results).length > 0) {
+        addText(bubble, "strong", "Tool results");
 
-  if (
-    status &&
-    typeof status === "object" &&
-    Object.keys(status).length > 0
-  ) {
-    if (status.status) {
-      addText(bubble, "strong", status.status);
-    }
+        Object.entries(results).forEach(([toolName, result]) => {
+          const card = document.createElement("div");
+          card.style.cssText =
+            "margin-top:10px;padding:12px;border:1px solid var(--border);" +
+            "border-radius:10px;";
 
-    if (status.message) {
-      addText(bubble, "p", status.message);
-    }
+          addText(card, "div", toolName, "tool-chip");
 
-    if (
-      Number.isInteger(status.completed_tasks) &&
-      Number.isInteger(status.remaining_tasks)
-    ) {
-      addText(
-        bubble,
-        "p",
-        `Tasks completed: ${status.completed_tasks} · ` +
-        `Remaining: ${status.remaining_tasks}`
+          if (!result || typeof result !== "object") {
+            addText(card, "p", "No structured result returned.");
+          } else {
+            if (result.message) addText(card, "p", result.message);
+
+            if (Array.isArray(result.plan)) {
+              addText(card, "p", `Generated ${result.plan.length} plan steps.`);
+            }
+
+            if (
+              Number.isInteger(result.completed_tasks) &&
+              Number.isInteger(result.remaining_tasks)
+            ) {
+              addText(
+                card,
+                "p",
+                `Completed: ${result.completed_tasks} · Remaining: ${result.remaining_tasks}`
+              );
+            }
+
+            if (result.status) addText(card, "p", `Status: ${result.status}`);
+          }
+
+          bubble.appendChild(card);
+        });
+      }
+
+      if (Array.isArray(data.plan) && data.plan.length > 0) {
+        addText(bubble, "strong", "Your action plan");
+        const list = document.createElement("ol");
+        list.className = "plan";
+        data.plan.forEach(step => addText(list, "li", step));
+        bubble.appendChild(list);
+      }
+
+      const status =
+        data.preparation_status && typeof data.preparation_status === "object"
+          ? data.preparation_status
+          : {};
+
+      if (status.status) addText(bubble, "strong", status.status);
+      if (status.message) addText(bubble, "p", status.message);
+
+      if (
+        Number.isInteger(status.completed_tasks) &&
+        Number.isInteger(status.remaining_tasks)
+      ) {
+        addText(
+          bubble,
+          "p",
+          `Tasks completed: ${status.completed_tasks} · Remaining: ${status.remaining_tasks}`
+        );
+      }
+
+      // The checklist can be returned at the top level or by either tool.
+      const checklistCandidates = [
+        status.tasks,
+        data.tasks,
+        results.get_preparation_status?.tasks,
+        results.complete_preparation_task?.tasks,
+        results.create_action_plan?.tasks
+      ];
+
+      const tasks = checklistCandidates.find(
+        candidate =>
+          Array.isArray(candidate) &&
+          candidate.length > 0 &&
+          candidate.every(
+            task =>
+              task &&
+              typeof task.title === "string" &&
+              typeof task.completed === "boolean"
+          )
       );
+
+      if (!renderChecklist(bubble, tasks)) {
+        addText(
+          bubble,
+          "p",
+          "No checklist was returned. Try Check progress again.",
+          "muted"
+        );
+      }
+
+      if (data.verification) {
+        const passed = data.verification.startsWith("Verification passed");
+        addText(
+          bubble,
+          "div",
+          data.verification,
+          passed ? "verification" : "verification error"
+        );
+      }
+
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
     }
-  }
-
-  // Show verification result.
-  if (data.verification) {
-    const passed = data.verification.startsWith("Verification passed");
-
-    addText(
-      bubble,
-      "div",
-      data.verification,
-      passed ? "verification" : "verification error"
-    );
-  }
-
-  messages.appendChild(bubble);
-  messages.scrollTop = messages.scrollHeight;
-}
-
 
     function showError(message) {
       const bubble = document.createElement("div");
@@ -629,11 +670,7 @@ function renderResult(data) {
       addUserMessage(text);
       input.value = "";
       sendButton.disabled = true;
-
-      // Prevent repeat clicks until the current request finishes.
-      document.querySelectorAll(".quick-actions button").forEach(button => {
-        button.disabled = true;
-      });
+      quickButtons.forEach(button => { button.disabled = true; });
 
       connection.className = "connection busy";
       connection.replaceChildren();
@@ -659,6 +696,7 @@ function renderResult(data) {
         }
 
         renderResult(data);
+
         connection.className = "connection online";
         connection.replaceChildren();
         addText(connection, "span", "", "dot");
@@ -666,7 +704,7 @@ function renderResult(data) {
       } catch (error) {
         showError(
           error.message ||
-          "Could not connect to AURA. Check that both local servers are running."
+          "Could not connect to AURA. Check that both servers are running."
         );
 
         connection.className = "connection";
@@ -675,22 +713,19 @@ function renderResult(data) {
         connection.appendChild(document.createTextNode("Connection failed"));
       } finally {
         sendButton.disabled = false;
-        document.querySelectorAll(".quick-actions button").forEach(button => {
-          button.disabled = false;
-        });
+        quickButtons.forEach(button => { button.disabled = false; });
         input.focus();
       }
     }
 
-    // Text input: send exactly what the user entered.
+    // Manual chat submission.
     form.addEventListener("submit", event => {
       event.preventDefault();
       sendGoal(input.value);
     });
 
-    // Quick actions: each button sends its explicit data-prompt.
-    // There is exactly one listener registration block in this file.
-    document.querySelectorAll(".quick-actions button[data-prompt]").forEach(button => {
+    // Register exactly one click handler per quick-action button.
+    quickButtons.forEach(button => {
       button.addEventListener("click", () => {
         sendGoal(button.dataset.prompt);
       });
