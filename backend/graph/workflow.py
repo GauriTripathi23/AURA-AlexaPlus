@@ -1,4 +1,5 @@
 
+import re
 from typing import TypedDict
 
 from langgraph.graph import StateGraph, START, END
@@ -22,8 +23,8 @@ class AgentState(TypedDict):
     verification: str
 
 
-# 1. Understand the user's goal
 def understand_goal(state: AgentState) -> dict:
+    """Describe the user's request."""
     goal = state["goal"]
 
     return {
@@ -33,8 +34,8 @@ def understand_goal(state: AgentState) -> dict:
     }
 
 
-# 2. Select one or more tools
 def select_agent_tool(state: AgentState) -> dict:
+    """Select one or more tools for the request."""
     tools = select_tools(state["goal"])
 
     if not tools:
@@ -46,8 +47,8 @@ def select_agent_tool(state: AgentState) -> dict:
     }
 
 
-# 3. Execute all selected tools in order
 def execute_selected_tools(state: AgentState) -> dict:
+    """Execute the selected tools sequentially."""
     goal = state["goal"]
     selected_tools = state.get("selected_tools") or [
         state.get("selected_tool", "create_action_plan")
@@ -58,12 +59,23 @@ def execute_selected_tools(state: AgentState) -> dict:
     tool_results = {}
 
     for tool_name in selected_tools:
+
         if tool_name == "create_action_plan":
             result = create_action_plan(goal)
             tool_results[tool_name] = result
 
-            if isinstance(result.get("plan"), list):
+            if (
+                isinstance(result, dict)
+                and isinstance(result.get("plan"), list)
+            ):
                 plan = result["plan"]
+
+            # Include the checklist returned by the planning tool.
+            if (
+                isinstance(result, dict)
+                and isinstance(result.get("tasks"), list)
+            ):
+                preparation_status = get_preparation_status(goal)
 
         elif tool_name == "get_preparation_status":
             result = get_preparation_status(goal)
@@ -71,9 +83,28 @@ def execute_selected_tools(state: AgentState) -> dict:
             preparation_status = result
 
         elif tool_name == "complete_preparation_task":
-            result = complete_preparation_task(goal)
+            task_match = re.search(
+                r"\b(?:complete|finish|mark)\s+"
+                r"(?:this\s+)?task\s*#?(\d+)\b",
+                goal,
+                re.IGNORECASE,
+            )
+
+            task_id = (
+                int(task_match.group(1))
+                if task_match
+                else None
+            )
+
+            result = complete_preparation_task(
+                goal,
+                task_id=task_id,
+            )
+
             tool_results[tool_name] = result
-            preparation_status = result
+
+            # Retrieve the latest checklist after the attempt.
+            preparation_status = get_preparation_status(goal)
 
         else:
             tool_results[tool_name] = {
@@ -87,11 +118,12 @@ def execute_selected_tools(state: AgentState) -> dict:
     }
 
 
-# 4. Verify each tool's returned result
 def verify_result(state: AgentState) -> dict:
+    """Validate results returned by the selected tools."""
     selected_tools = state.get("selected_tools") or [
         state.get("selected_tool", "")
     ]
+
     results = state.get("tool_results", {})
     errors = []
 
@@ -99,7 +131,9 @@ def verify_result(state: AgentState) -> dict:
         result = results.get(tool_name, {})
 
         if not isinstance(result, dict) or result.get("error"):
-            errors.append(f"{tool_name}: missing or invalid result")
+            errors.append(
+                f"{tool_name}: missing or invalid result"
+            )
             continue
 
         if tool_name == "create_action_plan":
@@ -115,7 +149,9 @@ def verify_result(state: AgentState) -> dict:
             )
 
             if not valid:
-                errors.append(f"{tool_name}: invalid action plan")
+                errors.append(
+                    f"{tool_name}: invalid action plan"
+                )
 
         elif tool_name in {
             "get_preparation_status",
@@ -134,11 +170,16 @@ def verify_result(state: AgentState) -> dict:
             )
 
             if not valid:
-                errors.append(f"{tool_name}: invalid task counts")
+                errors.append(
+                    f"{tool_name}: invalid task counts"
+                )
 
     if errors:
-        message = "Verification failed: " + "; ".join(errors) + "."
-
+        message = (
+            "Verification failed: "
+            + "; ".join(errors)
+            + "."
+        )
     else:
         names = " -> ".join(selected_tools)
         message = (
@@ -149,7 +190,7 @@ def verify_result(state: AgentState) -> dict:
     return {"verification": message}
 
 
-# 5. Build the graph
+# Build the LangGraph workflow.
 builder = StateGraph(AgentState)
 
 builder.add_node("understand_goal", understand_goal)
@@ -166,7 +207,6 @@ builder.add_edge("verify_result", END)
 workflow = builder.compile()
 
 
-# Local test
 if __name__ == "__main__":
     result = workflow.invoke(
         {
